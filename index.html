@@ -27,8 +27,8 @@
       background-image: url("9.png");
       background-repeat: no-repeat;
       background-position: center center;
-      background-size: contain;
-      opacity: 0.35;
+      background-size: cover;
+      opacity: 0.45;
       pointer-events: none;
       z-index: 0;
     }
@@ -42,10 +42,11 @@
     .card {
       max-width: 460px;
       margin: 40px auto;
-      background: rgba(255, 255, 255, 0.96);
+      background: rgba(255, 255, 255, 0.58);
       padding: 24px;
       border-radius: 18px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      box-shadow: none;
+      backdrop-filter: blur(2px);
     }
 
     h1 {
@@ -58,7 +59,7 @@
 
     .subtext {
       text-align: center;
-      color: #666;
+      color: #444;
       margin-bottom: 20px;
       line-height: 1.6;
       font-size: 14px;
@@ -79,7 +80,7 @@
       border: 1px solid #cfd8e3;
       border-radius: 12px;
       font-size: 16px;
-      background: white;
+      background: rgba(255, 255, 255, 0.85);
     }
 
     textarea {
@@ -91,7 +92,7 @@
       margin-top: 18px;
       padding: 14px;
       border-radius: 12px;
-      background: #f5f9fd;
+      background: rgba(245, 249, 253, 0.82);
       border: 1px solid #d9e8f5;
       line-height: 1.8;
       font-size: 14px;
@@ -132,7 +133,7 @@
     }
 
     .btn-secondary {
-      background: #e9f1f8;
+      background: rgba(233, 241, 248, 0.9);
       color: #16324f;
     }
 
@@ -166,7 +167,7 @@
     .note {
       margin-top: 18px;
       font-size: 13px;
-      color: #5d6875;
+      color: #333;
       line-height: 1.7;
       text-align: center;
     }
@@ -174,7 +175,7 @@
     .language-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(255, 255, 255, 0.94);
+      background: rgba(255, 255, 255, 0.90);
       z-index: 999;
       display: flex;
       align-items: center;
@@ -185,7 +186,7 @@
     .language-box {
       width: 100%;
       max-width: 380px;
-      background: white;
+      background: rgba(255, 255, 255, 0.92);
       border-radius: 18px;
       padding: 24px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.08);
@@ -222,7 +223,7 @@
 
     .top-language-btn button {
       border: none;
-      background: #e9f1f8;
+      background: rgba(233, 241, 248, 0.9);
       color: #16324f;
       padding: 8px 12px;
       border-radius: 10px;
@@ -284,7 +285,7 @@
       </div>
 
       <button class="btn btn-secondary" id="getLocationBtn" type="button" onclick="getLocationOnly()">
-        Get My Coordinates
+        Refresh Coordinates
       </button>
 
       <button class="btn btn-primary" id="sendBtn" type="button" onclick="sendLocation()">
@@ -324,7 +325,7 @@
         longLabel: "Longitude:",
         notAvailable: "Not available",
         openMap: "Open in Google Maps",
-        getLocationBtn: "Get My Coordinates",
+        getLocationBtn: "Refresh Coordinates",
         getLocationLoading: "Getting coordinates...",
         sendBtn: "Send Request",
         sendLoading: "Sending...",
@@ -357,7 +358,7 @@
         longLabel: "خط الطول:",
         notAvailable: "غير متوفر",
         openMap: "فتح الموقع في Google Maps",
-        getLocationBtn: "تحديد الإحداثيات",
+        getLocationBtn: "تحديث الإحداثيات",
         getLocationLoading: "جاري تحديد الإحداثيات...",
         sendBtn: "إرسال الطلب",
         sendLoading: "جاري الإرسال...",
@@ -408,6 +409,10 @@
 
       document.getElementById("mapLink").textContent = t.openMap;
       document.getElementById("languageOverlay").style.display = "none";
+
+      setTimeout(function() {
+        getLocationOnly();
+      }, 500);
     }
 
     function showLanguageChooser() {
