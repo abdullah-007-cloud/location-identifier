@@ -602,6 +602,245 @@
         sendBtn.textContent = t.sendBtn;
       }
     }
-  </script>
-</body>
-</html>
+  <script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbwnM3GQjY_qVZM7QtFBVKZ0YhP2YX5Kxi_Y0IuCUPhUNXv3cVzwcNcfV_xZqrGliNkb/exec";
+
+  let currentLang = "en";
+  let currentLatitude = null;
+  let currentLongitude = null;
+
+  const translations = {
+    en: {
+      dir: "ltr",
+      pageTitle: "Location Identifier",
+      pageSubtitle: "Please enter your mobile number, describe the case, get your coordinates, then send the request.",
+      changeLanguageBtn: "Change Language",
+      mobileLabel: "Mobile Number",
+      mobilePlaceholder: "Example: 05xxxxxxxx",
+      caseLabel: "Case Description",
+      casePlaceholder: "Describe the case",
+      coordinatesTitle: "Current Coordinates",
+      latLabel: "Latitude:",
+      longLabel: "Longitude:",
+      notAvailable: "Not available",
+      openMap: "Open in Google Maps",
+      getLocationBtn: "Get My Coordinates",
+      sendBtn: "Send Request",
+      privacyNote: "Your mobile number, case description, and current coordinates will be recorded for operational follow-up.",
+      chooseLanguageTitle: "Choose Language",
+      chooseLanguageSubtitle: "Please select your preferred language",
+      errors: {
+        mobileRequired: "Please enter your mobile number.",
+        caseRequired: "Please describe the case.",
+        geoNotSupported: "This browser does not support location services.",
+        permissionDenied: "Location permission was denied. Please enable location access.",
+        positionUnavailable: "Location is currently unavailable. Please ensure GPS is enabled.",
+        timeout: "Location request timed out. Please try again.",
+        locationRequired: "Please get your coordinates first.",
+        sendFailed: "Unable to send the request. Coordinates are available and can be shared manually.",
+        locationFetchFailed: "Unable to get your location."
+      },
+      success: {
+        locationReady: "Coordinates have been captured successfully.",
+        requestSent: "Request sent successfully."
+      }
+    },
+    ar: {
+      dir: "rtl",
+      pageTitle: "محدد الموقع",
+      pageSubtitle: "يرجى إدخال رقم الجوال، وصف الحالة، ثم تحديد الإحداثيات وبعدها إرسال الطلب.",
+      changeLanguageBtn: "تغيير اللغة",
+      mobileLabel: "رقم الجوال",
+      mobilePlaceholder: "مثال: 05xxxxxxxx",
+      caseLabel: "وصف الحالة",
+      casePlaceholder: "اكتب وصف الحالة",
+      coordinatesTitle: "الإحداثيات الحالية",
+      latLabel: "خط العرض:",
+      longLabel: "خط الطول:",
+      notAvailable: "غير متوفر",
+      openMap: "فتح الموقع في Google Maps",
+      getLocationBtn: "تحديد الإحداثيات",
+      sendBtn: "إرسال الطلب",
+      privacyNote: "سيتم تسجيل رقم الجوال، وصف الحالة، والإحداثيات الحالية لأغراض المتابعة التشغيلية.",
+      chooseLanguageTitle: "اختر اللغة",
+      chooseLanguageSubtitle: "يرجى اختيار اللغة المناسبة",
+      errors: {
+        mobileRequired: "يرجى إدخال رقم الجوال.",
+        caseRequired: "يرجى كتابة وصف الحالة.",
+        geoNotSupported: "المتصفح لا يدعم خدمات تحديد الموقع.",
+        permissionDenied: "تم رفض صلاحية الموقع. يرجى تفعيل الوصول للموقع.",
+        positionUnavailable: "الموقع غير متاح حاليًا. تأكد من تشغيل GPS.",
+        timeout: "انتهت مهلة تحديد الموقع. حاول مرة أخرى.",
+        locationRequired: "يرجى تحديد الإحداثيات أولًا.",
+        sendFailed: "تعذر إرسال الطلب. لكن الإحداثيات ظاهرة ويمكن إرسالها للعمليات يدويًا.",
+        locationFetchFailed: "تعذر الحصول على موقعك."
+      },
+      success: {
+        locationReady: "تم تحديد الإحداثيات بنجاح.",
+        requestSent: "تم إرسال الطلب بنجاح."
+      }
+    }
+  };
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+
+    document.documentElement.lang = lang;
+    document.documentElement.dir = t.dir;
+
+    document.getElementById("pageTitle").textContent = t.pageTitle;
+    document.getElementById("pageSubtitle").textContent = t.pageSubtitle;
+    document.getElementById("changeLanguageBtn").textContent = t.changeLanguageBtn;
+    document.getElementById("mobileLabel").textContent = t.mobileLabel;
+    document.getElementById("mobileNumber").placeholder = t.mobilePlaceholder;
+    document.getElementById("caseLabel").textContent = t.caseLabel;
+    document.getElementById("caseDescription").placeholder = t.casePlaceholder;
+    document.getElementById("coordinatesTitle").textContent = t.coordinatesTitle;
+    document.getElementById("latLabel").textContent = t.latLabel;
+    document.getElementById("longLabel").textContent = t.longLabel;
+    document.getElementById("getLocationBtn").textContent = t.getLocationBtn;
+    document.getElementById("sendBtn").textContent = t.sendBtn;
+    document.getElementById("privacyNote").textContent = t.privacyNote;
+    document.getElementById("chooseLanguageTitle").textContent = t.chooseLanguageTitle;
+    document.getElementById("chooseLanguageSubtitle").textContent = t.chooseLanguageSubtitle;
+
+    if (currentLatitude === null) {
+      document.getElementById("latitudeValue").textContent = t.notAvailable;
+    }
+
+    if (currentLongitude === null) {
+      document.getElementById("longitudeValue").textContent = t.notAvailable;
+    }
+
+    const mapLinkElement = document.getElementById("mapLink");
+    mapLinkElement.textContent = t.openMap;
+
+    document.getElementById("languageOverlay").style.display = "none";
+  }
+
+  function showLanguageChooser() {
+    document.getElementById("languageOverlay").style.display = "flex";
+  }
+
+  function showStatus(message, type) {
+    const status = document.getElementById("status");
+    status.className = "status " + type;
+    status.innerHTML = message;
+  }
+
+  function updateCoordinateDisplay(lat, long) {
+    currentLatitude = lat;
+    currentLongitude = long;
+
+    document.getElementById("latitudeValue").textContent = lat;
+    document.getElementById("longitudeValue").textContent = long;
+
+    const mapLinkElement = document.getElementById("mapLink");
+    mapLinkElement.href = "https://www.google.com/maps?q=" + lat + "," + long;
+    mapLinkElement.classList.remove("hidden");
+    mapLinkElement.textContent = translations[currentLang].openMap;
+  }
+
+  function getLocationOnly() {
+    const t = translations[currentLang];
+    const btn = document.getElementById("getLocationBtn");
+
+    if (!navigator.geolocation) {
+      showStatus(t.errors.geoNotSupported, "error");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = currentLang === "ar" ? "جاري تحديد الموقع..." : "Getting coordinates...";
+
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const lat = position.coords.latitude;
+        const long = position.coords.longitude;
+
+        updateCoordinateDisplay(lat, long);
+        showStatus(t.success.locationReady, "success");
+
+        btn.disabled = false;
+        btn.textContent = t.getLocationBtn;
+      },
+      function(error) {
+        let message = t.errors.locationFetchFailed;
+
+        if (error.code === 1) {
+          message = t.errors.permissionDenied;
+        } else if (error.code === 2) {
+          message = t.errors.positionUnavailable;
+        } else if (error.code === 3) {
+          message = t.errors.timeout;
+        }
+
+        showStatus(message, "error");
+        btn.disabled = false;
+        btn.textContent = t.getLocationBtn;
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  function sendLocation() {
+    const t = translations[currentLang];
+    const mobileNumber = document.getElementById("mobileNumber").value.trim();
+    const caseDescription = document.getElementById("caseDescription").value.trim();
+    const sendBtn = document.getElementById("sendBtn");
+
+    if (!mobileNumber) {
+      showStatus(t.errors.mobileRequired, "error");
+      return;
+    }
+
+    if (!caseDescription) {
+      showStatus(t.errors.caseRequired, "error");
+      return;
+    }
+
+    if (currentLatitude === null || currentLongitude === null) {
+      showStatus(t.errors.locationRequired, "error");
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = currentLang === "ar" ? "جاري الإرسال..." : "Sending...";
+
+    const mapLink = "https://www.google.com/maps?q=" + currentLatitude + "," + currentLongitude;
+
+    fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        mobileNumber: mobileNumber,
+        caseDescription: caseDescription,
+        latitude: currentLatitude,
+        longitude: currentLongitude
+      })
+    })
+    .then(function() {
+      showStatus(
+        t.success.requestSent + '<br><a href="' + mapLink + '" target="_blank">' + t.openMap + '</a>',
+        "success"
+      );
+
+      document.getElementById("caseDescription").value = "";
+    })
+    .catch(function() {
+      showStatus(t.errors.sendFailed, "error");
+    })
+    .finally(function() {
+      sendBtn.disabled = false;
+      sendBtn.textContent = t.sendBtn;
+    });
+  }
+</script>
