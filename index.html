@@ -479,7 +479,66 @@
       );
     }
 
-    async function sendLocation() {
+   function sendLocation() {
+  const t = translations[currentLang];
+  const mobileNumber = document.getElementById("mobileNumber").value.trim();
+  const caseDescription = document.getElementById("caseDescription").value.trim();
+  const sendBtn = document.getElementById("sendBtn");
+
+  if (!mobileNumber) {
+    showStatus(t.errors.mobileRequired, "error");
+    return;
+  }
+
+  if (!caseDescription) {
+    showStatus(t.errors.caseRequired, "error");
+    return;
+  }
+
+  if (!currentLatitude || !currentLongitude) {
+    showStatus(t.errors.locationRequired, "error");
+    return;
+  }
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = currentLang === "ar" ? "جاري الإرسال..." : "Sending...";
+
+  const mapLink = "https://www.google.com/maps?q=" + currentLatitude + "," + currentLongitude;
+
+  fetch(API_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      mobileNumber: mobileNumber,
+      caseDescription: caseDescription,
+      latitude: currentLatitude,
+      longitude: currentLongitude
+    })
+  })
+  .then(function() {
+    showStatus(
+      t.success.requestSent + '<br><a href="' + mapLink + '" target="_blank">' + t.openMap + '</a>',
+      "success"
+    );
+
+    document.getElementById("caseDescription").value = "";
+  })
+  .catch(function(error) {
+    showStatus(
+      currentLang === "ar"
+        ? "تعذر إرسال الطلب. لكن الإحداثيات ظاهرة ويمكن إرسالها للعمليات يدويًا."
+        : "Unable to send the request. Coordinates are available and can be shared manually.",
+      "error"
+    );
+  })
+  .finally(function() {
+    sendBtn.disabled = false;
+    sendBtn.textContent = t.sendBtn;
+  });
+}
       const t = translations[currentLang];
       const mobileNumber = document.getElementById("mobileNumber").value.trim();
       const caseDescription = document.getElementById("caseDescription").value.trim();
