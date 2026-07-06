@@ -2,6 +2,13 @@ const SHEET_ID = "1iYbEl8tLJqdcrMwiU1Nm8ApNrLz27X7ssW_P1HkOkrg";
 
 function doPost(e) {
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return jsonResponse({
+        success: false,
+        message: "No data received"
+      });
+    }
+
     const data = JSON.parse(e.postData.contents);
 
     const mobileNumber = data.mobileNumber || "";
@@ -9,14 +16,22 @@ function doPost(e) {
     const latitude = data.latitude || "";
     const longitude = data.longitude || "";
 
-    if (!mobileNumber || !latitude || !longitude) {
+    if (!mobileNumber) {
       return jsonResponse({
         success: false,
-        message: "Missing required fields"
+        message: "Mobile number is required"
+      });
+    }
+
+    if (!latitude || !longitude) {
+      return jsonResponse({
+        success: false,
+        message: "Location is required"
       });
     }
 
     const mapLink = "https://www.google.com/maps?q=" + latitude + "," + longitude;
+
     const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
 
     sheet.appendRow([
@@ -30,7 +45,8 @@ function doPost(e) {
 
     return jsonResponse({
       success: true,
-      message: "Saved successfully"
+      message: "Saved successfully",
+      mapLink: mapLink
     });
 
   } catch (error) {
@@ -42,20 +58,27 @@ function doPost(e) {
 }
 
 function doGet() {
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  try {
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
 
-  sheet.appendRow([
-    new Date(),
-    "TEST MOBILE",
-    "TEST FROM BROWSER",
-    "0",
-    "0",
-    "https://www.google.com/maps?q=0,0"
-  ]);
+    sheet.appendRow([
+      new Date(),
+      "TEST MOBILE",
+      "TEST FROM BROWSER",
+      "0",
+      "0",
+      "https://www.google.com/maps?q=0,0"
+    ]);
 
-  return ContentService
-    .createTextOutput("Test row added successfully")
-    .setMimeType(ContentService.MimeType.TEXT);
+    return ContentService
+      .createTextOutput("Test row added successfully")
+      .setMimeType(ContentService.MimeType.TEXT);
+
+  } catch (error) {
+    return ContentService
+      .createTextOutput("Error: " + error.toString())
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
 }
 
 function jsonResponse(obj) {
