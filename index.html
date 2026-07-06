@@ -1,88 +1,544 @@
-const SHEET_ID = "1iYbEl8tLJqdcrMwiU1Nm8ApNrLz27X7ssW_P1HkOkrg";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-function doPost(e) {
-  try {
-    if (!e || !e.postData || !e.postData.contents) {
-      return jsonResponse({
-        success: false,
-        message: "No data received"
+  <title>AMAALA Location Request</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("turtle-bg.png");
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: cover;
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 460px;
+      margin: 35px auto;
+      background: rgba(255, 255, 255, 0.58);
+      padding: 24px;
+      border-radius: 18px;
+      box-shadow: none;
+      backdrop-filter: blur(2px);
+    }
+
+    .language-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      color: #16324f;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .language-row select {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #cfd8e3;
+      background: rgba(255, 255, 255, 0.9);
+      color: #16324f;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #16324f;
+      font-size: 25px;
+    }
+
+    .subtext {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .urgent-note {
+      background: rgba(232, 247, 238, 0.9);
+      color: #146c2e;
+      padding: 12px;
+      border-radius: 12px;
+      line-height: 1.6;
+      font-size: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+      color: #16324f;
+    }
+
+    .optional {
+      font-weight: normal;
+      color: #666;
+      font-size: 13px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #cfd8e3;
+      border-radius: 12px;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 95px;
+    }
+
+    .coordinates-box {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(245, 249, 253, 0.85);
+      border: 1px solid #d9e8f5;
+      line-height: 1.8;
+      font-size: 14px;
+      color: #16324f;
+    }
+
+    .coordinates-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .coord-value {
+      word-break: break-word;
+    }
+
+    .map-link {
+      display: inline-block;
+      margin-top: 8px;
+      color: #0b5cab;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #0b5cab;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(233, 241, 248, 0.9);
+      color: #16324f;
+    }
+
+    .btn:disabled {
+      background: #9aa7b4;
+      color: white;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      display: none;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .success {
+      background: #e8f7ee;
+      color: #146c2e;
+      display: block;
+    }
+
+    .error {
+      background: #fdeaea;
+      color: #9b1c1c;
+      display: block;
+    }
+
+    .note {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page">
+    <div class="card">
+
+      <div class="language-row">
+        <span id="languageLabel">اللغة:</span>
+        <select id="languageSelect" onchange="setLanguage(this.value)">
+          <option value="ar" selected>العربية</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <h1 id="pageTitle">مشاركة الموقع مع عمليات AMAALA</h1>
+
+      <div class="subtext" id="pageSubtitle">
+        أدخل رقم جوالك ثم اضغط إرسال موقعي الآن. وصف الحالة اختياري، والأهم هو تحديد موقعك.
+      </div>
+
+      <div class="urgent-note" id="urgentNote">
+        في الحالات الطارئة، أرسل موقعك أولًا. يمكن لفريق العمليات التواصل معك على رقم الجوال.
+      </div>
+
+      <label for="mobileNumber" id="mobileLabel">رقم الجوال</label>
+      <input id="mobileNumber" type="tel" placeholder="مثال: 05xxxxxxxx" />
+
+      <label for="caseDescription" id="caseLabel">
+        وصف الحالة <span class="optional" id="optionalText">(اختياري)</span>
+      </label>
+      <textarea id="caseDescription" placeholder="مثال: إصابة، حادث، حالة مرضية، أو اتركه فارغًا"></textarea>
+
+      <button class="btn btn-primary" id="sendBtn" type="button" onclick="sendLocationNow()">
+        إرسال موقعي الآن
+      </button>
+
+      <button class="btn btn-secondary" id="showCoordinatesBtn" type="button" onclick="getLocationOnly()">
+        عرض الإحداثيات يدويًا
+      </button>
+
+      <div class="coordinates-box">
+        <div class="coordinates-title" id="coordinatesTitle">الإحداثيات الحالية</div>
+
+        <div class="coord-value">
+          <strong id="latLabel">خط العرض:</strong>
+          <span id="latitudeValue">غير متوفر</span>
+        </div>
+
+        <div class="coord-value">
+          <strong id="longLabel">خط الطول:</strong>
+          <span id="longitudeValue">غير متوفر</span>
+        </div>
+
+        <a id="mapLink" class="map-link hidden" href="#" target="_blank">فتح الموقع في Google Maps</a>
+      </div>
+
+      <div id="status" class="status"></div>
+
+      <div class="note" id="privacyNote">
+        سيتم إرسال رقم الجوال وموقعك الحالي إلى عمليات AMAALA للمساعدة في تحديد موقعك وتوجيه فريق الاستجابة المناسب مثل الإسعاف أو الأمن أو فرق الطوارئ عند الحاجة. وصف الحالة اختياري ويمكن تركه فارغًا.
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "1iYbEl8tLJqdcrMwiU1Nm8ApNrLz27X7ssW_P1HkOkrg";
+
+    let currentLang = "ar";
+    let currentLatitude = null;
+    let currentLongitude = null;
+
+    const translations = {
+      en: {
+        dir: "ltr",
+        languageLabel: "Language:",
+        pageTitle: "Share Location with AMAALA Operations",
+        pageSubtitle: "Enter your mobile number, then press Send My Location Now. Case description is optional; your location is the priority.",
+        urgentNote: "In emergencies, send your location first. Operations can contact you through your mobile number.",
+        mobileLabel: "Mobile Number",
+        mobilePlaceholder: "Example: 05xxxxxxxx",
+        caseLabel: "Case Description",
+        optionalText: "(Optional)",
+        casePlaceholder: "Example: Injury, accident, medical case, or leave it blank",
+        coordinatesTitle: "Current Coordinates",
+        latLabel: "Latitude:",
+        longLabel: "Longitude:",
+        notAvailable: "Not available",
+        openMap: "Open in Google Maps",
+        sendBtn: "Send My Location Now",
+        sendLoading: "Getting location and sending...",
+        showCoordinatesBtn: "Show Coordinates Manually",
+        getLocationLoading: "Getting coordinates...",
+        privacyNote: "Your mobile number and current location will be sent to AMAALA Operations to help identify your location and dispatch the appropriate response team, such as ambulance, security, or emergency responders when required. Case description is optional and may be left blank.",
+        mobileRequired: "Please enter your mobile number.",
+        geoNotSupported: "This browser does not support location services.",
+        permissionDenied: "Location permission was denied. Please enable location access.",
+        positionUnavailable: "Location is currently unavailable. Please ensure GPS is enabled.",
+        timeout: "Location request timed out. Please try again.",
+        locationReady: "Coordinates have been captured successfully.",
+        requestSent: "Your location has been sent successfully.",
+        requestFailed: "Unable to send the request. Coordinates are available and can be shared manually."
+      },
+
+      ar: {
+        dir: "rtl",
+        languageLabel: "اللغة:",
+        pageTitle: "مشاركة الموقع مع عمليات AMAALA",
+        pageSubtitle: "أدخل رقم جوالك ثم اضغط إرسال موقعي الآن. وصف الحالة اختياري، والأهم هو تحديد موقعك.",
+        urgentNote: "في الحالات الطارئة، أرسل موقعك أولًا. يمكن لفريق العمليات التواصل معك على رقم الجوال.",
+        mobileLabel: "رقم الجوال",
+        mobilePlaceholder: "مثال: 05xxxxxxxx",
+        caseLabel: "وصف الحالة",
+        optionalText: "(اختياري)",
+        casePlaceholder: "مثال: إصابة، حادث، حالة مرضية، أو اتركه فارغًا",
+        coordinatesTitle: "الإحداثيات الحالية",
+        latLabel: "خط العرض:",
+        longLabel: "خط الطول:",
+        notAvailable: "غير متوفر",
+        openMap: "فتح الموقع في Google Maps",
+        sendBtn: "إرسال موقعي الآن",
+        sendLoading: "جاري تحديد الموقع والإرسال...",
+        showCoordinatesBtn: "عرض الإحداثيات يدويًا",
+        getLocationLoading: "جاري تحديد الإحداثيات...",
+        privacyNote: "سيتم إرسال رقم الجوال وموقعك الحالي إلى عمليات AMAALA للمساعدة في تحديد موقعك وتوجيه فريق الاستجابة المناسب مثل الإسعاف أو الأمن أو فرق الطوارئ عند الحاجة. وصف الحالة اختياري ويمكن تركه فارغًا.",
+        mobileRequired: "يرجى إدخال رقم الجوال.",
+        geoNotSupported: "المتصفح لا يدعم خدمات تحديد الموقع.",
+        permissionDenied: "تم رفض صلاحية الموقع. يرجى تفعيل الوصول للموقع.",
+        positionUnavailable: "الموقع غير متاح حاليًا. تأكد من تشغيل GPS.",
+        timeout: "انتهت مهلة تحديد الموقع. حاول مرة أخرى.",
+        locationReady: "تم تحديد الإحداثيات بنجاح.",
+        requestSent: "تم إرسال موقعك بنجاح.",
+        requestFailed: "تعذر إرسال الطلب. الإحداثيات ظاهرة ويمكن إرسالها للعمليات يدويًا."
+      }
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const t = translations[lang];
+
+      document.documentElement.lang = lang;
+      document.documentElement.dir = t.dir;
+
+      document.getElementById("languageLabel").textContent = t.languageLabel;
+      document.getElementById("pageTitle").textContent = t.pageTitle;
+      document.getElementById("pageSubtitle").textContent = t.pageSubtitle;
+      document.getElementById("urgentNote").textContent = t.urgentNote;
+      document.getElementById("mobileLabel").textContent = t.mobileLabel;
+      document.getElementById("mobileNumber").placeholder = t.mobilePlaceholder;
+      document.getElementById("caseLabel").childNodes[0].nodeValue = t.caseLabel + " ";
+      document.getElementById("optionalText").textContent = t.optionalText;
+      document.getElementById("caseDescription").placeholder = t.casePlaceholder;
+      document.getElementById("coordinatesTitle").textContent = t.coordinatesTitle;
+      document.getElementById("latLabel").textContent = t.latLabel;
+      document.getElementById("longLabel").textContent = t.longLabel;
+      document.getElementById("sendBtn").textContent = t.sendBtn;
+      document.getElementById("showCoordinatesBtn").textContent = t.showCoordinatesBtn;
+      document.getElementById("privacyNote").textContent = t.privacyNote;
+
+      if (currentLatitude === null) {
+        document.getElementById("latitudeValue").textContent = t.notAvailable;
+      }
+
+      if (currentLongitude === null) {
+        document.getElementById("longitudeValue").textContent = t.notAvailable;
+      }
+
+      document.getElementById("mapLink").textContent = t.openMap;
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById("status");
+      status.className = "status " + type;
+      status.innerHTML = message;
+    }
+
+    function updateCoordinateDisplay(lat, long) {
+      currentLatitude = lat;
+      currentLongitude = long;
+
+      document.getElementById("latitudeValue").textContent = lat;
+      document.getElementById("longitudeValue").textContent = long;
+
+      const mapUrl = "https://www.google.com/maps?q=" + lat + "," + long;
+
+      const mapLinkElement = document.getElementById("mapLink");
+      mapLinkElement.href = mapUrl;
+      mapLinkElement.textContent = translations[currentLang].openMap;
+      mapLinkElement.classList.remove("hidden");
+    }
+
+    function getLocationOnly() {
+      const t = translations[currentLang];
+      const btn = document.getElementById("showCoordinatesBtn");
+
+      if (!navigator.geolocation) {
+        showStatus(t.geoNotSupported, "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = t.getLocationLoading;
+
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const lat = position.coords.latitude;
+          const long = position.coords.longitude;
+
+          updateCoordinateDisplay(lat, long);
+          showStatus(t.locationReady, "success");
+
+          btn.disabled = false;
+          btn.textContent = t.showCoordinatesBtn;
+        },
+        function(error) {
+          handleLocationError(error);
+          btn.disabled = false;
+          btn.textContent = t.showCoordinatesBtn;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function sendLocationNow() {
+      const t = translations[currentLang];
+      const mobileNumber = document.getElementById("mobileNumber").value.trim();
+      const caseDescription = document.getElementById("caseDescription").value.trim();
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!mobileNumber) {
+        showStatus(t.mobileRequired, "error");
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        showStatus(t.geoNotSupported, "error");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = t.sendLoading;
+
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const lat = position.coords.latitude;
+          const long = position.coords.longitude;
+
+          updateCoordinateDisplay(lat, long);
+          sendToDatabase(mobileNumber, caseDescription, lat, long);
+        },
+        function(error) {
+          handleLocationError(error);
+          sendBtn.disabled = false;
+          sendBtn.textContent = t.sendBtn;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function sendToDatabase(mobileNumber, caseDescription, lat, long) {
+      const t = translations[currentLang];
+      const sendBtn = document.getElementById("sendBtn");
+      const mapUrl = "https://www.google.com/maps?q=" + lat + "," + long;
+
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          mobileNumber: mobileNumber,
+          caseDescription: caseDescription,
+          latitude: lat,
+          longitude: long
+        })
+      })
+      .then(function() {
+        showStatus(
+          t.requestSent + "<br><a href='" + mapUrl + "' target='_blank'>" + t.openMap + "</a>",
+          "success"
+        );
+
+        document.getElementById("caseDescription").value = "";
+      })
+      .catch(function() {
+        showStatus(t.requestFailed, "error");
+      })
+      .finally(function() {
+        sendBtn.disabled = false;
+        sendBtn.textContent = t.sendBtn;
       });
     }
 
-    const data = JSON.parse(e.postData.contents);
+    function handleLocationError(error) {
+      const t = translations[currentLang];
+      let message = "";
 
-    const mobileNumber = data.mobileNumber || "";
-    const caseDescription = data.caseDescription || "";
-    const latitude = data.latitude || "";
-    const longitude = data.longitude || "";
+      if (error.code === 1) {
+        message = t.permissionDenied;
+      } else if (error.code === 2) {
+        message = t.positionUnavailable;
+      } else if (error.code === 3) {
+        message = t.timeout;
+      } else {
+        message = t.positionUnavailable;
+      }
 
-    if (!mobileNumber) {
-      return jsonResponse({
-        success: false,
-        message: "Mobile number is required"
-      });
+      showStatus(message, "error");
     }
 
-    if (!latitude || !longitude) {
-      return jsonResponse({
-        success: false,
-        message: "Location is required"
-      });
-    }
+    window.onload = function() {
+      setLanguage("ar");
+    };
+  </script>
 
-    const mapLink = "https://www.google.com/maps?q=" + latitude + "," + longitude;
-
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
-
-    sheet.appendRow([
-      new Date(),
-      mobileNumber,
-      caseDescription,
-      latitude,
-      longitude,
-      mapLink
-    ]);
-
-    return jsonResponse({
-      success: true,
-      message: "Saved successfully",
-      mapLink: mapLink
-    });
-
-  } catch (error) {
-    return jsonResponse({
-      success: false,
-      message: error.toString()
-    });
-  }
-}
-
-function doGet() {
-  try {
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
-
-    sheet.appendRow([
-      new Date(),
-      "TEST MOBILE",
-      "TEST FROM BROWSER",
-      "0",
-      "0",
-      "https://www.google.com/maps?q=0,0"
-    ]);
-
-    return ContentService
-      .createTextOutput("Test row added successfully")
-      .setMimeType(ContentService.MimeType.TEXT);
-
-  } catch (error) {
-    return ContentService
-      .createTextOutput("Error: " + error.toString())
-      .setMimeType(ContentService.MimeType.TEXT);
-  }
-}
-
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+</body>
+</html>
