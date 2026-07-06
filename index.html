@@ -24,7 +24,7 @@
       content: "";
       position: fixed;
       inset: 0;
-      background-image: url("turtle-bg.png");
+      background-image: url("9.bg.png");
       background-repeat: no-repeat;
       background-position: center center;
       background-size: cover;
@@ -46,7 +46,7 @@
       padding: 24px;
       border-radius: 18px;
       box-shadow: none;
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(1px);
     }
 
     .language-row {
@@ -155,6 +155,13 @@
       font-weight: bold;
     }
 
+    .gps-status {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #146c2e;
+      font-weight: bold;
+    }
+
     .btn {
       width: 100%;
       margin-top: 16px;
@@ -169,11 +176,6 @@
     .btn-primary {
       background: #0b5cab;
       color: white;
-    }
-
-    .btn-secondary {
-      background: rgba(233, 241, 248, 0.9);
-      color: #16324f;
     }
 
     .btn:disabled {
@@ -248,29 +250,29 @@
       </label>
       <textarea id="caseDescription" placeholder="مثال: إصابة، حادث، حالة مرضية، أو اتركه فارغًا"></textarea>
 
-      <button class="btn btn-primary" id="sendBtn" type="button" onclick="sendLocationNow()">
-        إرسال موقعي الآن
-      </button>
-
-      <button class="btn btn-secondary" id="showCoordinatesBtn" type="button" onclick="getLocationOnly()">
-        عرض الإحداثيات يدويًا
-      </button>
-
       <div class="coordinates-box">
         <div class="coordinates-title" id="coordinatesTitle">الإحداثيات الحالية</div>
 
         <div class="coord-value">
           <strong id="latLabel">خط العرض:</strong>
-          <span id="latitudeValue">غير متوفر</span>
+          <span id="latitudeValue">جاري تحديد الموقع...</span>
         </div>
 
         <div class="coord-value">
           <strong id="longLabel">خط الطول:</strong>
-          <span id="longitudeValue">غير متوفر</span>
+          <span id="longitudeValue">جاري تحديد الموقع...</span>
         </div>
 
         <a id="mapLink" class="map-link hidden" href="#" target="_blank">فتح الموقع في Google Maps</a>
+
+        <div class="gps-status" id="gpsStatus">
+          جاري تحديث الموقع تلقائيًا...
+        </div>
       </div>
+
+      <button class="btn btn-primary" id="sendBtn" type="button" onclick="sendLocationNow()">
+        إرسال موقعي الآن
+      </button>
 
       <div id="status" class="status"></div>
 
@@ -287,6 +289,7 @@
     let currentLang = "ar";
     let currentLatitude = null;
     let currentLongitude = null;
+    let watchId = null;
 
     const translations = {
       en: {
@@ -303,19 +306,19 @@
         coordinatesTitle: "Current Coordinates",
         latLabel: "Latitude:",
         longLabel: "Longitude:",
-        notAvailable: "Not available",
+        notAvailable: "Getting location...",
         openMap: "Open in Google Maps",
         sendBtn: "Send My Location Now",
-        sendLoading: "Getting location and sending...",
-        showCoordinatesBtn: "Show Coordinates Manually",
-        getLocationLoading: "Getting coordinates...",
+        sendLoading: "Sending location...",
         privacyNote: "Your mobile number and current location will be sent to AMAALA Operations to help identify your location and dispatch the appropriate response team, such as ambulance, security, or emergency responders when required. Case description is optional and may be left blank.",
         mobileRequired: "Please enter your mobile number.",
+        locationRequired: "Location is not ready yet. Please wait until coordinates appear.",
         geoNotSupported: "This browser does not support location services.",
         permissionDenied: "Location permission was denied. Please enable location access.",
         positionUnavailable: "Location is currently unavailable. Please ensure GPS is enabled.",
         timeout: "Location request timed out. Please try again.",
-        locationReady: "Coordinates have been captured successfully.",
+        gpsUpdating: "Location is updating automatically...",
+        gpsReady: "Live location is active.",
         requestSent: "Your location has been sent successfully.",
         requestFailed: "Unable to send the request. Coordinates are available and can be shared manually."
       },
@@ -334,19 +337,19 @@
         coordinatesTitle: "الإحداثيات الحالية",
         latLabel: "خط العرض:",
         longLabel: "خط الطول:",
-        notAvailable: "غير متوفر",
+        notAvailable: "جاري تحديد الموقع...",
         openMap: "فتح الموقع في Google Maps",
         sendBtn: "إرسال موقعي الآن",
-        sendLoading: "جاري تحديد الموقع والإرسال...",
-        showCoordinatesBtn: "عرض الإحداثيات يدويًا",
-        getLocationLoading: "جاري تحديد الإحداثيات...",
+        sendLoading: "جاري إرسال الموقع...",
         privacyNote: "سيتم إرسال رقم الجوال وموقعك الحالي إلى عمليات AMAALA للمساعدة في تحديد موقعك وتوجيه فريق الاستجابة المناسب مثل الإسعاف أو الأمن أو فرق الطوارئ عند الحاجة. وصف الحالة اختياري ويمكن تركه فارغًا.",
         mobileRequired: "يرجى إدخال رقم الجوال.",
+        locationRequired: "لم يتم تحديد الموقع بعد. يرجى الانتظار حتى تظهر الإحداثيات.",
         geoNotSupported: "المتصفح لا يدعم خدمات تحديد الموقع.",
         permissionDenied: "تم رفض صلاحية الموقع. يرجى تفعيل الوصول للموقع.",
         positionUnavailable: "الموقع غير متاح حاليًا. تأكد من تشغيل GPS.",
         timeout: "انتهت مهلة تحديد الموقع. حاول مرة أخرى.",
-        locationReady: "تم تحديد الإحداثيات بنجاح.",
+        gpsUpdating: "جاري تحديث الموقع تلقائيًا...",
+        gpsReady: "تم تفعيل التحديث المباشر للموقع.",
         requestSent: "تم إرسال موقعك بنجاح.",
         requestFailed: "تعذر إرسال الطلب. الإحداثيات ظاهرة ويمكن إرسالها للعمليات يدويًا."
       }
@@ -372,8 +375,8 @@
       document.getElementById("latLabel").textContent = t.latLabel;
       document.getElementById("longLabel").textContent = t.longLabel;
       document.getElementById("sendBtn").textContent = t.sendBtn;
-      document.getElementById("showCoordinatesBtn").textContent = t.showCoordinatesBtn;
       document.getElementById("privacyNote").textContent = t.privacyNote;
+      document.getElementById("mapLink").textContent = t.openMap;
 
       if (currentLatitude === null) {
         document.getElementById("latitudeValue").textContent = t.notAvailable;
@@ -383,7 +386,8 @@
         document.getElementById("longitudeValue").textContent = t.notAvailable;
       }
 
-      document.getElementById("mapLink").textContent = t.openMap;
+      document.getElementById("gpsStatus").textContent =
+        currentLatitude === null ? t.gpsUpdating : t.gpsReady;
     }
 
     function showStatus(message, type) {
@@ -405,39 +409,36 @@
       mapLinkElement.href = mapUrl;
       mapLinkElement.textContent = translations[currentLang].openMap;
       mapLinkElement.classList.remove("hidden");
+
+      document.getElementById("gpsStatus").textContent = translations[currentLang].gpsReady;
     }
 
-    function getLocationOnly() {
+    function startLiveLocation() {
       const t = translations[currentLang];
-      const btn = document.getElementById("showCoordinatesBtn");
 
       if (!navigator.geolocation) {
         showStatus(t.geoNotSupported, "error");
+        document.getElementById("gpsStatus").textContent = t.geoNotSupported;
         return;
       }
 
-      btn.disabled = true;
-      btn.textContent = t.getLocationLoading;
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
 
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         function(position) {
           const lat = position.coords.latitude;
           const long = position.coords.longitude;
 
           updateCoordinateDisplay(lat, long);
-          showStatus(t.locationReady, "success");
-
-          btn.disabled = false;
-          btn.textContent = t.showCoordinatesBtn;
         },
         function(error) {
           handleLocationError(error);
-          btn.disabled = false;
-          btn.textContent = t.showCoordinatesBtn;
         },
         {
           enableHighAccuracy: true,
-          timeout: 15000,
+          timeout: 20000,
           maximumAge: 0
         }
       );
@@ -454,33 +455,15 @@
         return;
       }
 
-      if (!navigator.geolocation) {
-        showStatus(t.geoNotSupported, "error");
+      if (currentLatitude === null || currentLongitude === null) {
+        showStatus(t.locationRequired, "error");
         return;
       }
 
       sendBtn.disabled = true;
       sendBtn.textContent = t.sendLoading;
 
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          const lat = position.coords.latitude;
-          const long = position.coords.longitude;
-
-          updateCoordinateDisplay(lat, long);
-          sendToDatabase(mobileNumber, caseDescription, lat, long);
-        },
-        function(error) {
-          handleLocationError(error);
-          sendBtn.disabled = false;
-          sendBtn.textContent = t.sendBtn;
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
-        }
-      );
+      sendToDatabase(mobileNumber, caseDescription, currentLatitude, currentLongitude);
     }
 
     function sendToDatabase(mobileNumber, caseDescription, lat, long) {
@@ -532,11 +515,13 @@
         message = t.positionUnavailable;
       }
 
+      document.getElementById("gpsStatus").textContent = message;
       showStatus(message, "error");
     }
 
     window.onload = function() {
       setLanguage("ar");
+      startLiveLocation();
     };
   </script>
 
